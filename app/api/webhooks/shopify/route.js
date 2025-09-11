@@ -26,22 +26,54 @@ export async function POST(req) {
     }
 
     // Use a switch statement to handle different types of webhooks
-    switch (topic) {
-      case 'orders/create':
-        // TODO: Add logic here to save the order data to your database
-        console.log('Received a new order:', data);
-        break;
+    // Use a switch statement to handle different types of webhooks
+switch (topic) {
+  case 'orders/create':
+    // Logic to save a new order
+    // Note: This assumes the customer already exists in your DB.
+    // Shopify typically sends the customer/create webhook first.
+    await prisma.order.create({
+      data: {
+        id: `shopify-${data.id}`,
+        orderNumber: data.order_number,
+        totalPrice: parseFloat(data.total_price),
+        orderedAt: new Date(data.created_at),
+        storeId: store.id,
+        customerId: `shopify-${data.customer.id}`,
+      },
+    });
+    console.log(`Saved new order ${data.order_number} for ${shopDomain}`);
+    break;
 
-      case 'customers/create':
-        // TODO: Add logic here to save the customer data
-        console.log('Received a new customer:', data);
-        break;
+  case 'customers/create':
+    // Logic to save a new customer
+    await prisma.customer.create({
+      data: {
+        id: `shopify-${data.id}`,
+        firstName: data.first_name,
+        lastName: data.last_name,
+        email: data.email,
+        totalSpent: parseFloat(data.total_spent),
+        storeId: store.id,
+      },
+    });
+    console.log(`Saved new customer ${data.email} for ${shopDomain}`);
+    break;
 
-      case 'products/create':
-        // TODO: Add logic here to save the product data
-        console.log('Received a new product:', data);
-        break;
-    }
+  case 'products/create':
+    // Logic to save a new product
+    await prisma.product.create({
+      data: {
+        id: `shopify-${data.id}`,
+        title: data.title,
+        vendor: data.vendor,
+        price: parseFloat(data.variants[0]?.price || 0),
+        storeId: store.id,
+      },
+    });
+    console.log(`Saved new product "${data.title}" for ${shopDomain}`);
+    break;
+}
 
     // Respond to Shopify with a 200 OK
     return new Response('Webhook received successfully', { status: 200 });
