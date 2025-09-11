@@ -5,8 +5,6 @@ const prisma = new PrismaClient();
 
 export async function GET(req) {
   try {
-    // For a real multi-tenant app, you'd get the storeId from a logged-in user's session.
-    // For now, we'll just get stats for all stores.
     const totalCustomers = await prisma.customer.count();
     const totalOrders = await prisma.order.count();
     const totalRevenueResult = await prisma.order.aggregate({
