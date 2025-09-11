@@ -1,0 +1,72 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Tenant model: represents a Shopify store
+model Store {
+  id          String   @id @default(cuid())
+  shopName    String   @unique // e.g., "my-cool-store.myshopify.com"
+  accessToken String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  customers Customer[]
+  products  Product[]
+  orders    Order[]
+}
+
+model Customer {
+  id         String @id
+  firstName  String
+  lastName   String
+  email      String
+  totalSpent Float
+  createdAt  DateTime @default(now())
+
+  // Multi-tenancy key
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id])
+
+  orders Order[]
+  @@unique([email, storeId]) // A customer is unique per store
+}
+
+model Product {
+  id    String @id
+  title String
+  vendor String
+  price Float
+  createdAt DateTime @default(now())
+
+  // Multi-tenancy key
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id])
+}
+
+model Order {
+  id          String   @id
+  orderNumber Int
+  totalPrice  Float
+  orderedAt   DateTime
+  createdAt   DateTime @default(now())
+
+  // Multi-tenancy key
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id])
+
+  // Relation to customer
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+}
