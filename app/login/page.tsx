@@ -12,10 +12,10 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(''); // Clear previous errors
+    setError('');
 
     const result = await signIn('credentials', {
-      redirect: false, // Do not redirect automatically
+      redirect: false,
       email,
       password,
     });
@@ -24,7 +24,7 @@ export default function LoginPage() {
       // THE FIX IS HERE: The string now uses double quotes
       setError("Invalid login credentials.");
     } else {
-      router.push('/'); // Redirect to dashboard on success
+      router.push('/');
     }
   };
 
