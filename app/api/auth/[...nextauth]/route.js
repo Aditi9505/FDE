@@ -30,7 +30,7 @@ export const authOptions = {
       }
     })
   ],
-  // THIS IS THE CRITICAL FIX
+  // THIS IS THE CRITICAL FIX that tells NextAuth where to find your login page
   pages: {
     signIn: '/login',
   },
