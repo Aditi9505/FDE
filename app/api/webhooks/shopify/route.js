@@ -20,29 +20,20 @@ export async function POST(req) {
     }
 
     switch (topic) {
-      case 'orders/create':
-        await prisma.order.create({
-          data: {
-            id: `shopify-${data.id}`,
-            orderNumber: data.order_number,
-            totalPrice: parseFloat(data.total_price),
-            orderedAt: new Date(data.created_at),
-            storeId: store.id,
-            customerId: `shopify-${data.customer.id}`,
-          },
-        });
-        console.log(`Saved new order ${data.order_number} for ${shopDomain}`);
-        break;
-
       case 'customers/create':
         await prisma.customer.create({
           data: {
             id: `shopify-${data.id}`,
             firstName: data.first_name,
-            lastName: data.last_name,
+            // Use an empty string as a fallback if last name is null
+            lastName: data.last_name || '',
             email: data.email,
-            totalSpent: parseFloat(data.total_spent),
-            storeId: store.id,
+            // Use 0 as a fallback if total_spent is not a valid number
+            totalSpent: parseFloat(data.total_spent || 0),
+            // Correct way to connect to an existing store
+            store: {
+              connect: { id: store.id },
+            },
           },
         });
         console.log(`Saved new customer ${data.email} for ${shopDomain}`);
@@ -55,10 +46,33 @@ export async function POST(req) {
             title: data.title,
             vendor: data.vendor,
             price: parseFloat(data.variants[0]?.price || 0),
-            storeId: store.id,
+            // Correct way to connect to an existing store
+            store: {
+              connect: { id: store.id },
+            },
           },
         });
         console.log(`Saved new product "${data.title}" for ${shopDomain}`);
+        break;
+        
+      case 'orders/create':
+        await prisma.order.create({
+          data: {
+            id: `shopify-${data.id}`,
+            orderNumber: data.order_number,
+            totalPrice: parseFloat(data.total_price),
+            orderedAt: new Date(data.created_at),
+            // Correct way to connect to an existing store
+            store: {
+              connect: { id: store.id },
+            },
+            // Correct way to connect to an existing customer
+            customer: {
+              connect: { id: `shopify-${data.customer.id}` },
+            },
+          },
+        });
+        console.log(`Saved new order ${data.order_number} for ${shopDomain}`);
         break;
     }
 
