@@ -21,7 +21,7 @@ export default function LoginPage() {
     });
 
     if (result?.error) {
-      // This is the line that was fixed
+      // THE FIX IS HERE: The string now uses double quotes
       setError("Invalid login credentials.");
     } else {
       router.push('/'); // Redirect to dashboard on success
@@ -73,3 +73,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
