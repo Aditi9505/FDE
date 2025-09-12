@@ -22,7 +22,6 @@ export default function LoginPage() {
     });
 
     if (result?.error) {
-      // THE FIX IS HERE: The string now uses double quotes
       setError("Invalid login credentials.");
     } else {
       router.push('/');

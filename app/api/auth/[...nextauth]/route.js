@@ -22,16 +22,15 @@ export const authOptions = {
           where: { email: credentials.email }
         });
 
-        // In a real app, you would use bcrypt.compare() here
+        // In a real app, you would hash the password and compare hashes.
         if (user && user.password === credentials.password) {
-          return { id: user.id, email: user.email };
+          return { id: user.id, email: user.email }; // Success
         } else {
-          return null;
+          return null; // Failure
         }
       }
     })
   ],
-  // THIS IS THE CRITICAL FIX that tells NextAuth where to find your login page
   pages: {
     signIn: '/login',
   },
