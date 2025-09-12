@@ -1,9 +1,8 @@
-// We need to check the user's session, so this remains a Client Component
+// Client Component for interactivity
 "use client";
 
 import { useEffect, useState } from 'react';
-// Note: In a real app, you would handle authentication properly with NextAuth.js
-// For this demo, we are keeping the data fetching public.
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 // --- Type Definitions ---
 type SummaryData = {
@@ -20,7 +19,12 @@ type Customer = {
   totalSpent: number;
 };
 
-// --- SVG Icon Components ---
+type MonthlySale = {
+  month: string;
+  totalSales: number;
+};
+
+// --- SVG Icon Components (from previous version, re-used) ---
 const UsersIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197m0 0A5.975 5.975 0 0112 13a5.975 5.975 0 01-3 5.197" />
@@ -56,23 +60,29 @@ const StatCard = ({ title, value, icon }: { title: string; value: string | numbe
 export default function DashboardPage() {
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [topCustomers, setTopCustomers] = useState<Customer[]>([]);
+  const [monthlySales, setMonthlySales] = useState<MonthlySale[]>([]); // New state for chart data
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        const [summaryRes, customersRes] = await Promise.all([
+        const [summaryRes, customersRes, monthlySalesRes] = await Promise.all([
           fetch('/api/insights/summary'),
           fetch('/api/insights/top-customers'),
+          fetch('/api/insights/monthly-sales'), // Fetch monthly sales
         ]);
-        if (!summaryRes.ok || !customersRes.ok) throw new Error('Failed to fetch dashboard data');
+        if (!summaryRes.ok || !customersRes.ok || !monthlySalesRes.ok) {
+          throw new Error('Failed to fetch dashboard data');
+        }
 
         const summaryData = await summaryRes.json();
         const topCustomersData = await customersRes.json();
+        const monthlySalesData = await monthlySalesRes.json(); // Get monthly sales data
 
         setSummary(summaryData);
         setTopCustomers(topCustomersData);
+        setMonthlySales(monthlySalesData); // Set monthly sales data
       } catch (err) {
         setError(err instanceof Error ? err.message : "An unknown error occurred");
       } finally {
@@ -103,36 +113,61 @@ export default function DashboardPage() {
         <StatCard title="Total Revenue" value={`₹${(summary?.totalRevenue ?? 0).toFixed(2)}`} icon={<RevenueIcon />} />
       </div>
 
-      {/* Top Customers Table */}
-      <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-        <h2 className="text-xl font-semibold mb-4">Top 5 Customers by Spend</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="border-b border-gray-700">
-              <tr>
-                <th className="p-4">Name</th>
-                <th className="p-4">Email</th>
-                <th className="p-4 text-right">Total Spent</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topCustomers.length > 0 ? (
-                topCustomers.map(customer => (
-                  <tr key={customer.id} className="border-b border-gray-700 hover:bg-gray-700/50">
-                    <td className="p-4">{customer.firstName} {customer.lastName}</td>
-                    <td className="p-4 text-gray-400">{customer.email}</td>
-                    <td className="p-4 text-right font-mono">₹{customer.totalSpent.toFixed(2)}</td>
-                  </tr>
-                ))
-              ) : (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Sales Analytics Chart */}
+        <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+          <h2 className="text-xl font-semibold mb-4">Sales Analytics</h2>
+          <div style={{ width: '100%', height: 300 }}>
+            <ResponsiveContainer>
+              <LineChart
+                data={monthlySales}
+                margin={{
+                  top: 5, right: 30, left: 20, bottom: 5,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#4a5568" />
+                <XAxis dataKey="month" stroke="#cbd5e0" />
+                <YAxis stroke="#cbd5e0" />
+                <Tooltip contentStyle={{ backgroundColor: '#2d3748', border: 'none', borderRadius: '8px' }} itemStyle={{ color: '#fff' }} labelStyle={{ color: '#cbd5e0' }} />
+                <Line type="monotone" dataKey="totalSales" stroke="#8884d8" activeDot={{ r: 8 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Top Customers Table (from previous version, re-used) */}
+        <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+          <h2 className="text-xl font-semibold mb-4">Top 5 Customers by Spend</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="border-b border-gray-700">
                 <tr>
-                  <td colSpan={3} className="p-4 text-center text-gray-500">No customer data yet.</td>
+                  <th className="p-4">Name</th>
+                  <th className="p-4">Email</th>
+                  <th className="p-4 text-right">Total Spent</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {topCustomers.length > 0 ? (
+                  topCustomers.map(customer => (
+                    <tr key={customer.id} className="border-b border-gray-700 hover:bg-gray-700/50">
+                      <td className="p-4">{customer.firstName} {customer.lastName}</td>
+                      <td className="p-4 text-gray-400">{customer.email}</td>
+                      <td className="p-4 text-right font-mono">₹{customer.totalSpent.toFixed(2)}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3} className="p-4 text-center text-gray-500">No customer data yet.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
+
+      {/* You can add other components here later for the bottom sections */}
     </div>
   );
 }
