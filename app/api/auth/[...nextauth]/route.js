@@ -30,9 +30,9 @@ export const authOptions = {
       }
     })
   ],
-  // ADD THIS SECTION
+  // ADD THIS SECTION to tell NextAuth.js where your login page is
   pages: {
-    signIn: '/login', // Tells NextAuth.js to use your custom login page
+    signIn: '/login',
   },
   session: {
     strategy: 'jwt',
