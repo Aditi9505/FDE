@@ -1,4 +1,3 @@
-// THIS IS THE FINAL CORRECTED VERSION
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaClient } from '@prisma/client';
@@ -17,20 +16,21 @@ export const authOptions = {
         if (!credentials) {
           return null;
         }
-        
+
         const user = await prisma.user.findUnique({
           where: { email: credentials.email }
         });
 
-        // In a real app, you would hash the password and compare hashes.
+        // In a real app, you would use bcrypt.compare() here
         if (user && user.password === credentials.password) {
-          return { id: user.id, email: user.email }; // Success
+          return { id: user.id, email: user.email };
         } else {
-          return null; // Failure
+          return null;
         }
       }
     })
   ],
+  // This is the critical fix that tells NextAuth where your login page is
   pages: {
     signIn: '/login',
   },
